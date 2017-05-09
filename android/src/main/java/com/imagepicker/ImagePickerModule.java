@@ -4,6 +4,8 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
+import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
@@ -13,6 +15,8 @@ import android.graphics.BitmapFactory.Options;
 import android.graphics.Matrix;
 import android.media.ExifInterface;
 import android.net.Uri;
+import android.media.ThumbnailUtils;
+import android.provider.MediaStore.Images.Thumbnails;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v4.app.ActivityCompat;
@@ -22,6 +26,7 @@ import android.widget.ArrayAdapter;
 import android.webkit.MimeTypeMap;
 import android.content.pm.PackageManager;
 import android.media.MediaScannerConnection;
+import android.graphics.BitmapFactory.Options;
 
 import com.facebook.react.bridge.ActivityEventListener;
 import com.facebook.react.bridge.Arguments;
@@ -54,6 +59,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 import java.util.UUID;
+
+import static android.content.ContentValues.TAG;
 
 public class ImagePickerModule extends ReactContextBaseJavaModule implements ActivityEventListener {
 
@@ -287,7 +294,62 @@ public class ImagePickerModule extends ReactContextBaseJavaModule implements Act
     }
   }
 
-  @Override
+  public String getThumb(String file){
+      return storeImage(getBitmapFromVideo(file));
+  }
+
+  public Bitmap getBitmapFromVideo(String file) {
+    return ThumbnailUtils.createVideoThumbnail(file,
+            MediaStore.Images.Thumbnails.MINI_KIND);
+  }
+
+    private String storeImage(Bitmap image) {
+        File pictureFile = getOutputMediaFile();
+        Uri uri = null;
+        if (pictureFile == null) {
+            Log.d(TAG,
+                    "Error creating media file, check storage permissions: ");// e.getMessage());
+        }
+        try {
+            uri = Uri.fromFile(pictureFile);
+            FileOutputStream fos = new FileOutputStream(pictureFile);
+            image.compress(Bitmap.CompressFormat.PNG, 90, fos);
+            fos.close();
+        } catch (FileNotFoundException e) {
+            Log.d(TAG, "File not found: " + e.getMessage());
+        } catch (IOException e) {
+            Log.d(TAG, "Error accessing file: " + e.getMessage());
+        }
+        return uri.toString();
+    }
+
+    /** Create a File for saving an image or video */
+    private  File getOutputMediaFile(){
+        // To be safe, you should check that the SDCard is mounted
+        // using Environment.getExternalStorageState() before doing this.
+        File mediaStorageDir = new File(Environment.getExternalStorageDirectory()
+                + "/Android/data/"
+                + mReactContext.getPackageName()
+                + "/Files");
+
+        // This location works best if you want the created images to be shared
+        // between applications and persist after your app has been uninstalled.
+
+        // Create the storage directory if it does not exist
+        if (! mediaStorageDir.exists()){
+            if (! mediaStorageDir.mkdirs()){
+                return null;
+            }
+        }
+        // Create a media file name
+        String timeStamp = new SimpleDateFormat("ddMMyyyy_HHmm").format(new Date());
+        File mediaFile;
+        String mImageName="MI_"+ timeStamp +".jpg";
+        mediaFile = new File(mediaStorageDir.getPath() + File.separator + mImageName);
+        return mediaFile;
+    }
+
+    @Override
   public void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
     //robustness code
     if (mCallback == null || (mCameraCaptureURI == null && requestCode == REQUEST_LAUNCH_IMAGE_CAPTURE)
@@ -315,11 +377,14 @@ public class ImagePickerModule extends ReactContextBaseJavaModule implements Act
         uri = data.getData();
         break;
       case REQUEST_LAUNCH_VIDEO_LIBRARY:
+        //response.putString("thumb", getThumbnailPathForLocalFile(ThumbnailUtils.createVideoThumbnail(data.getData().toString(), Thumbnails.MINI_KIND)).toString());
         response.putString("uri", data.getData().toString());
         response.putString("path", getRealPathFromURI(data.getData()));
         mCallback.invoke(response);
         return;
       case REQUEST_LAUNCH_VIDEO_CAPTURE:
+        //this.getThumbnailPathForLocalFile(data.getData().toString(), mCallback);
+          response.putString("thumb", getThumb(getRealPathFromURI(data.getData())));
         response.putString("uri", data.getData().toString());
         response.putString("path", getRealPathFromURI(data.getData()));
         this.fileScan(response.getString("path"));
