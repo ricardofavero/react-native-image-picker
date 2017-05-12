@@ -20,6 +20,12 @@ import android.util.Base64;
 import android.util.Patterns;
 import android.webkit.MimeTypeMap;
 import android.content.pm.PackageManager;
+import android.content.Context;
+import android.content.ContextWrapper;
+import android.media.ThumbnailUtils;
+import android.provider.MediaStore.Images.Thumbnails;
+import android.graphics.BitmapFactory.Options;
+import static android.content.ContentValues.TAG;
 
 import com.facebook.react.ReactActivity;
 import com.facebook.react.bridge.ActivityEventListener;
@@ -335,6 +341,35 @@ public class ImagePickerModule extends ReactContextBaseJavaModule
     }
   }
 
+  public String getThumb(String file){
+      return storeImage(getBitmapFromVideo(file));
+  }
+
+  public Bitmap getBitmapFromVideo(String file) {
+    return ThumbnailUtils.createVideoThumbnail(file,
+            MediaStore.Images.Thumbnails.MINI_KIND);
+  }
+
+    private String storeImage(Bitmap image) {
+        File pictureFile = getOutputMediaFile();
+        Uri uri = null;
+        if (pictureFile == null) {
+            Log.d(TAG,
+                    "Error creating media file, check storage permissions: ");// e.getMessage());
+        }
+        try {
+            uri = Uri.fromFile(pictureFile);
+            FileOutputStream fos = new FileOutputStream(pictureFile);
+            image.compress(Bitmap.CompressFormat.PNG, 90, fos);
+            fos.close();
+        } catch (FileNotFoundException e) {
+            Log.d(TAG, "File not found: " + e.getMessage());
+        } catch (IOException e) {
+            Log.d(TAG, "Error accessing file: " + e.getMessage());
+        }
+        return uri.toString();
+    }
+
   @Override
   public void onActivityResult(Activity activity, int requestCode, int resultCode, Intent data) {
     //robustness code
@@ -398,6 +433,7 @@ public class ImagePickerModule extends ReactContextBaseJavaModule
         final String path = getRealPathFromURI(data.getData());
         responseHelper.putString("uri", data.getData().toString());
         responseHelper.putString("path", path);
+        response.putString("thumb", getThumb(getRealPathFromURI(data.getData())));
         fileScan(reactContext, path);
         responseHelper.invokeResponse(callback);
         callback = null;
