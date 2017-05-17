@@ -467,24 +467,37 @@ RCT_EXPORT_METHOD(showImagePicker:(NSDictionary *)options callback:(RCTResponseS
             if (videoRefURL.absoluteString) {
                 [self.response setObject:videoRefURL.absoluteString forKey:@"origURL"];
             }
-            
-            
-            
-            NSURL *videoURL = [NSURL fileURLWithPath:videoDestinationURL];// filepath is your video file path
-            
-            AVURLAsset *asset = [[AVURLAsset alloc] initWithURL:videoURL options:nil];
+
+
+
+            NSURL *videoURLx = [NSURL fileURLWithPath:videoDestinationURL.path];// filepath is your video file path
+
+            AVURLAsset *asset = [[AVURLAsset alloc] initWithURL:videoURLx options:nil];
             AVAssetImageGenerator *generateImg = [[AVAssetImageGenerator alloc] initWithAsset:asset];
             NSError *error = NULL;
             CMTime time = CMTimeMake(1, 1);
             CGImageRef refImg = [generateImg copyCGImageAtTime:time actualTime:NULL error:&error];
             NSLog(@"error==%@, Refimage==%@", error, refImg);
-            
-            //UIImage *FrameImage= [[UIImage alloc] initWithCGImage:refImg];
-            //[self.response setObject:videoDestinationURL.absoluteString forKey:@"thumb_ios"];
+            NSLog(@"videoDestinationURL==%@, videoRefURL.absoluteString==%@", videoDestinationURL.absoluteString, videoRefURL.absoluteString);
+
+            UIImage *FrameImage= [[UIImage alloc] initWithCGImage:refImg];
+
+
+            // Create path.
+            NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+            NSString *thumbPath = [[paths objectAtIndex:0] stringByAppendingPathComponent:@"thumbtest.png"];
+
+            // Save image.
+            [UIImagePNGRepresentation(FrameImage) writeToFile:thumbPath atomically:YES];
+
+
+            //NSLog(@"Frameima==%@", UIImageJPEGRepresentation(FrameImage, 1.0));
+
+            [self.response setObject:thumbPath forKey:@"thumb"];
             //return FrameImage;
-            
-            
-            
+
+
+
 
             NSDictionary *storageOptions = [self.options objectForKey:@"storageOptions"];
             if (storageOptions && [[storageOptions objectForKey:@"cameraRoll"] boolValue] == YES && self.picker.sourceType == UIImagePickerControllerSourceTypeCamera) {
@@ -536,6 +549,18 @@ RCT_EXPORT_METHOD(showImagePicker:(NSDictionary *)options callback:(RCTResponseS
     dispatch_async(dispatch_get_main_queue(), ^{
         [picker dismissViewControllerAnimated:YES completion:dismissCompletionBlock];
     });
+}
+
+
+- (NSString *)dataURL
+{
+    NSData *imageData = nil;
+    NSString *mimeType = nil;
+
+        imageData = UIImageJPEGRepresentation(self, 1.0);
+        mimeType = @"image/jpeg";
+
+    return [NSString stringWithFormat:@"data:%@;base64,%@", mimeType, imageData];
 }
 
 - (void)imagePickerControllerDidCancel:(UIImagePickerController *)picker
