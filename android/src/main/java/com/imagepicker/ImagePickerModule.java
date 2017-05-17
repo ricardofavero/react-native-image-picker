@@ -347,7 +347,7 @@ public class ImagePickerModule extends ReactContextBaseJavaModule
   }
 
   public String getThumb(String file){
-    return storeImage(getBitmapFromVideo(file)).uri.toString();
+    return storeImage(getBitmapFromVideo(file));
   }
 
   public Bitmap getBitmapFromVideo(String file) {
