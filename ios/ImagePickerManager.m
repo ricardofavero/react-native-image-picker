@@ -467,6 +467,24 @@ RCT_EXPORT_METHOD(showImagePicker:(NSDictionary *)options callback:(RCTResponseS
             if (videoRefURL.absoluteString) {
                 [self.response setObject:videoRefURL.absoluteString forKey:@"origURL"];
             }
+            
+            
+            
+            NSURL *videoURL = [NSURL fileURLWithPath:videoDestinationURL];// filepath is your video file path
+            
+            AVURLAsset *asset = [[AVURLAsset alloc] initWithURL:videoURL options:nil];
+            AVAssetImageGenerator *generateImg = [[AVAssetImageGenerator alloc] initWithAsset:asset];
+            NSError *error = NULL;
+            CMTime time = CMTimeMake(1, 1);
+            CGImageRef refImg = [generateImg copyCGImageAtTime:time actualTime:NULL error:&error];
+            NSLog(@"error==%@, Refimage==%@", error, refImg);
+            
+            //UIImage *FrameImage= [[UIImage alloc] initWithCGImage:refImg];
+            //[self.response setObject:videoDestinationURL.absoluteString forKey:@"thumb_ios"];
+            //return FrameImage;
+            
+            
+            
 
             NSDictionary *storageOptions = [self.options objectForKey:@"storageOptions"];
             if (storageOptions && [[storageOptions objectForKey:@"cameraRoll"] boolValue] == YES && self.picker.sourceType == UIImagePickerControllerSourceTypeCamera) {
