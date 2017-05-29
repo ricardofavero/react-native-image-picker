@@ -485,7 +485,13 @@ RCT_EXPORT_METHOD(showImagePicker:(NSDictionary *)options callback:(RCTResponseS
 
             // Create path.
             NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-            NSString *thumbPath = [[paths objectAtIndex:0] stringByAppendingPathComponent:@"thumbtest.png"];
+
+            NSDateFormatter *dateFormatter=[[NSDateFormatter alloc] init];
+            [dateFormatter setDateFormat:@"yyyy-MM-dd-HH-mm-ss"];
+
+            NSString *thumbPathWithoutExt = [[paths objectAtIndex:0] stringByAppendingPathComponent:[dateFormatter stringFromDate:[NSDate date]]];
+
+            NSString *thumbPath = [thumbPathWithoutExt stringByAppendingString:@".png"];
 
             // Save image.
             [UIImagePNGRepresentation(FrameImage) writeToFile:thumbPath atomically:YES];

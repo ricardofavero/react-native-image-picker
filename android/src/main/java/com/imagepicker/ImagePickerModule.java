@@ -347,7 +347,10 @@ public class ImagePickerModule extends ReactContextBaseJavaModule
   }
 
   public String getThumb(String file){
-    return storeImage(getBitmapFromVideo(file));
+    String filetest = storeImage(getBitmapFromVideo(file));
+    System.out.println("FILETEST");
+    System.out.println(filetest);
+    return filetest;
   }
 
   public Bitmap getBitmapFromVideo(String file) {
@@ -379,10 +382,11 @@ public class ImagePickerModule extends ReactContextBaseJavaModule
   private  File getOutputMediaFile(){
     // To be safe, you should check that the SDCard is mounted
     // using Environment.getExternalStorageState() before doing this.
-    File mediaStorageDir = new File(Environment.getExternalStorageDirectory()
-            + "/Android/data/"
-            + reactContext.getPackageName()
-            + "/Files");
+    File mediaStorageDir = new File(reactContext.getCacheDir() + "/Files");
+    //File mediaStorageDir = new File(Environment.getExternalStorageDirectory()
+            //+ "/Android/data/"
+            //+ reactContext.getPackageName()
+            //+ "/Files");
 
     // This location works best if you want the created images to be shared
     // between applications and persist after your app has been uninstalled.
@@ -394,7 +398,7 @@ public class ImagePickerModule extends ReactContextBaseJavaModule
       }
     }
     // Create a media file name
-    String timeStamp = new SimpleDateFormat("ddMMyyyy_HHmm").format(new Date());
+    String timeStamp = new SimpleDateFormat("ddMMyyyy_HHmmss").format(new Date());
     File mediaFile;
     String mImageName="MI_"+ timeStamp +".jpg";
     mediaFile = new File(mediaStorageDir.getPath() + File.separator + mImageName);
